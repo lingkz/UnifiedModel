@@ -2,7 +2,7 @@
 
 Thank you for helping improve UModel. This repository is an open-source implementation of the UModel object graph semantic layer, so contributions should keep the public API, CLI, MCP, SDK, examples, and documentation aligned.
 
-中文说明：欢迎参与 UModel 共建。提交前请优先保证本地可运行、示例可复现、公开契约清晰。
+Chinese version: [CONTRIBUTING.zh-CN.md](CONTRIBUTING.zh-CN.md)
 
 ## Requirements
 
