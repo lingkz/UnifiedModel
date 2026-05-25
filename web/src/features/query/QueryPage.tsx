@@ -142,6 +142,7 @@ export function QueryPage({ api, workspaceId }: { api: UModelApi; workspaceId: s
             wordWrap="on"
             onChange={setQuery}
             onContentHeightChange={setSplEditorHeight}
+            onSubmit={() => void run('execute')}
           />
         </section>
 
@@ -252,6 +253,7 @@ function MonacoBlock({
   minAutoHeight,
   onChange,
   onContentHeightChange,
+  onSubmit,
 }: {
   value: string
   language: string
@@ -263,10 +265,11 @@ function MonacoBlock({
   minAutoHeight?: number
   onChange?: (value: string) => void
   onContentHeightChange?: (height: number) => void
+  onSubmit?: () => void
 }) {
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null)
-  const autoHeightRef = useRef({ min: minAutoHeight, max: maxAutoHeight, onChange: onContentHeightChange })
-  autoHeightRef.current = { min: minAutoHeight, max: maxAutoHeight, onChange: onContentHeightChange }
+  const autoHeightRef = useRef({ min: minAutoHeight, max: maxAutoHeight, onChange: onContentHeightChange, onSubmit })
+  autoHeightRef.current = { min: minAutoHeight, max: maxAutoHeight, onChange: onContentHeightChange, onSubmit }
 
   const updateAutoHeight = (editor: MonacoEditor.IStandaloneCodeEditor) => {
     const { min, max, onChange: emitHeight } = autoHeightRef.current
@@ -295,10 +298,17 @@ function MonacoBlock({
         value={value}
         language={language}
         theme="vs"
-        onMount={(editor) => {
+        onMount={(editor, monaco) => {
           editorRef.current = editor
           updateAutoHeight(editor)
           editor.onDidContentSizeChange(() => updateAutoHeight(editor))
+          if (!readOnly) {
+            editor.addCommand(monaco.KeyCode.Enter, () => autoHeightRef.current.onSubmit?.())
+            const insertLineBreak = () => editor.trigger('keyboard', 'type', { text: '\n' })
+            editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, insertLineBreak)
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, insertLineBreak)
+            editor.addCommand(monaco.KeyMod.WinCtrl | monaco.KeyCode.Enter, insertLineBreak)
+          }
         }}
         onChange={(nextValue) => {
           if (!readOnly) onChange?.(nextValue || '')
