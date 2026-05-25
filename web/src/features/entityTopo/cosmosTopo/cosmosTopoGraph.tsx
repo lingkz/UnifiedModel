@@ -1397,7 +1397,7 @@ export const CosmosTopoGraph = forwardRef<TopoGraphRef, Omit<TopoGraphProps, 'ty
           tick={tick}
         />
         <CosmosHoverPanel info={hoverPanel} />
-        <CosmosNodeActionMenu engine={engineRef.current} tick={tick} onIsolate={isolateHoveredNode} />
+        {props.handleNodeIsolate && <CosmosNodeActionMenu engine={engineRef.current} tick={tick} onIsolate={isolateHoveredNode} />}
         {layout.showMiniMap !== false && <CosmosMiniMap engine={engineRef.current} tick={tick} />}
         {isolatedNodeId && (
           <div style={isolationBarStyle}>

@@ -15,6 +15,8 @@ const FOCUSED_DETAIL_NODE_LIMIT = 120
 
 export function EntityTopoGraphView({
   data,
+  enableFocusActions = true,
+  showViewportToolbar = true,
   focusIds,
   selected,
   settings,
@@ -24,6 +26,8 @@ export function EntityTopoGraphView({
   onZoomLevelChange,
 }: {
   data: EntityTopoData
+  enableFocusActions?: boolean
+  showViewportToolbar?: boolean
   focusIds: string[]
   selected: TopoSelection | null
   settings: EntityTopoDisplaySettings
@@ -93,22 +97,24 @@ export function EntityTopoGraphView({
         style={{ width: '100%', height: '100%', background: 'transparent' }}
         handleNodeClick={handleNodeClick}
         handleEdgeClick={handleEdgeClick}
-        handleNodeIsolate={handleNodeIsolate}
+        handleNodeIsolate={enableFocusActions ? handleNodeIsolate : undefined}
         handleCloseInfo={() => onSelect(null)}
       >
-        <div className="eto-cosmos-toolbar">
-          <button type="button" onClick={() => void graphRef.current?.getGraph().fitView()} title="Fit view">
-            <LocateFixed size={14} />
-          </button>
-          <button type="button" onClick={() => graphRef.current?.getGraph().resetView()} title="Reset view">
-            <RotateCcw size={14} />
-          </button>
-          {selectedNode && (
-            <button type="button" onClick={() => onFocusNode(selectedNode)} title="Focus one-hop neighbors">
-              <Crosshair size={14} />
+        {showViewportToolbar && (
+          <div className="eto-cosmos-toolbar">
+            <button type="button" onClick={() => void graphRef.current?.getGraph().fitView()} title="Fit view">
+              <LocateFixed size={14} />
             </button>
-          )}
-        </div>
+            <button type="button" onClick={() => graphRef.current?.getGraph().resetView()} title="Reset view">
+              <RotateCcw size={14} />
+            </button>
+            {enableFocusActions && selectedNode && (
+              <button type="button" onClick={() => onFocusNode(selectedNode)} title="Focus one-hop neighbors">
+                <Crosshair size={14} />
+              </button>
+            )}
+          </div>
+        )}
       </CosmosTopoGraph>
     </div>
   )

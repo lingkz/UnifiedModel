@@ -101,6 +101,7 @@ export function WorkspaceShell({
   }, [api, onBack, onWorkspaceChange, refreshToken, view, workspace, workspaceId])
 
   const explorerHost = view === 'explorer' || view === 'entityTopo'
+  const topbarHidden = explorerHost || view === 'query'
 
   return (
     <div className={`workspace-shell app-shell ${sidebarCollapsed ? 'collapsed' : ''} ${explorerHost ? 'explorer-host' : ''}`}>
@@ -144,8 +145,8 @@ export function WorkspaceShell({
         </div>
       </aside>
 
-      <section className={`workspace-main ${explorerHost ? 'explorer-main-host' : ''}`}>
-        {!explorerHost && (
+      <section className={`workspace-main ${topbarHidden ? 'workspace-main-no-topbar' : ''} ${explorerHost ? 'explorer-main-host' : ''}`}>
+        {!topbarHidden && (
         <header className="workspace-topbar">
           <div className="row" style={{ minWidth: 0 }}>
             <Badge tone="indigo">{viewLabel(view)}</Badge>

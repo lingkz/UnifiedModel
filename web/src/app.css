@@ -4507,6 +4507,10 @@
   background: #ffffff;
 }
 
+.workspace-main.workspace-main-no-topbar {
+  grid-template-rows: 1fr;
+}
+
 .workspace-topbar {
   min-width: 0;
   padding: 0 16px;
