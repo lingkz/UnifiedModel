@@ -3,12 +3,14 @@ import { Play, Route } from 'lucide-react'
 import type { QueryResult } from '../../api/types'
 import { UModelApi } from '../../api/client'
 import { Badge, Button, Field, Panel, Tabs, TextInput } from '../../design/components'
+import { useI18n } from '../../i18n'
 import { formatError } from '../../lib/json'
 import { ResultTable } from './QueryPage'
 
 type DataMode = 'entity' | 'topo'
 
 export function DataStorePage({ api, workspaceId }: { api: UModelApi; workspaceId: string }) {
+  const { t } = useI18n()
   const [mode, setMode] = useState<DataMode>('entity')
   const [domain, setDomain] = useState('devops')
   const [name, setName] = useState('devops.service')
@@ -36,11 +38,11 @@ export function DataStorePage({ api, workspaceId }: { api: UModelApi; workspaceI
   return (
     <div className="page-grid">
       <Panel
-        title={<strong>Data Store</strong>}
+        title={<strong>{t('query.data.title')}</strong>}
         action={
           <Button variant="primary" disabled={busy} onClick={() => void run()}>
             <Play size={15} />
-            Run
+            {t('query.action.execute')}
           </Button>
         }
       >
@@ -49,38 +51,38 @@ export function DataStorePage({ api, workspaceId }: { api: UModelApi; workspaceI
             value={mode}
             onChange={setMode}
             items={[
-              { value: 'entity', label: 'Entities', icon: <Route size={14} /> },
-              { value: 'topo', label: 'Topology', icon: <Route size={14} /> },
+              { value: 'entity', label: t('query.data.entities'), icon: <Route size={14} /> },
+              { value: 'topo', label: t('query.data.topology'), icon: <Route size={14} /> },
             ]}
           />
           {mode === 'entity' ? (
             <div className="row" style={{ alignItems: 'end' }}>
               <div style={{ width: 160 }}>
-                <Field label="Domain">
+                <Field label={t('query.data.domain')}>
                   <TextInput value={domain} onChange={(event) => setDomain(event.target.value)} />
                 </Field>
               </div>
               <div style={{ width: 220 }}>
-                <Field label="Entity set">
+                <Field label={t('query.data.entitySet')}>
                   <TextInput value={name} onChange={(event) => setName(event.target.value)} />
                 </Field>
               </div>
               <div style={{ flex: 1, minWidth: 220 }}>
-                <Field label="Search">
+                <Field label={t('query.data.search')}>
                   <TextInput value={queryText} onChange={(event) => setQueryText(event.target.value)} />
                 </Field>
               </div>
             </div>
           ) : (
-            <Field label="Seed entity ID">
+            <Field label={t('query.data.seedEntityId')}>
               <TextInput value={seed} onChange={(event) => setSeed(event.target.value)} />
             </Field>
           )}
           {error && <Badge tone="danger">{error}</Badge>}
         </div>
       </Panel>
-      <Panel title={<strong>Result</strong>} action={result && <Badge>{result.rows.length}</Badge>}>
-        {result ? <ResultTable result={result} /> : <div className="muted">No result yet.</div>}
+      <Panel title={<strong>{t('query.result.title')}</strong>} action={result && <Badge>{result.rows.length}</Badge>}>
+        {result ? <ResultTable result={result} /> : <div className="muted">{t('query.result.empty.title')}</div>}
       </Panel>
     </div>
   )
