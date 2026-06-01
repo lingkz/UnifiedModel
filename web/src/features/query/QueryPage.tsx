@@ -58,7 +58,7 @@ const examples = [
   {
     label: 'cypher',
     query:
-      ".topo | graph-call cypher(`MATCH (svc:``devops@devops.service`` {__entity_id__: '10000000000000000000000000000101'}) OPTIONAL MATCH path = (svc)-[r*1..2]-(neighbor) WITH svc, neighbor, relationships(path) AS rels WHERE neighbor IS NULL OR coalesce(neighbor.__deleted__, false) = false RETURN svc.__entity_id__ AS service_id, neighbor.__entity_id__ AS neighbor_id, [rel IN rels | type(rel)] AS relation_types, size(rels) AS hops ORDER BY hops, neighbor LIMIT 20`) | limit 20",
+      ".topo | graph-call cypher(`MATCH (src:``devops@devops.service`` {__entity_id__: '10000000000000000000000000000101'})-[r]->(dest) RETURN properties(src) AS src, properties(r) AS relation, properties(dest) AS dest LIMIT 20`) | limit 20",
   },
 ]
 
@@ -91,7 +91,9 @@ export function QueryPage({ api, workspaceId }: { api: UModelApi; workspaceId: s
 
       if (kind === 'execute') {
         const next = await api.query(workspaceId, request)
-        const nextTopoEntityRows = await loadTopoEntityRows(api, workspaceId, next, request.time_range).catch(() => [])
+        const nextTopoEntityRows = hasInlineTopoEntityProperties(next)
+          ? []
+          : await loadTopoEntityRows(api, workspaceId, next, request.time_range).catch(() => [])
         setResult(next)
         setTopoEntityRows(nextTopoEntityRows)
         setExplain(next.explain || null)
@@ -701,6 +703,16 @@ function toIsoOrUndefined(value: string) {
   if (!value) return undefined
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
+}
+
+function hasInlineTopoEntityProperties(result: QueryResult) {
+  return result.rows.some((row) => isEntityPropertyRecord(row.src) && isEntityPropertyRecord(row.dest))
+}
+
+function isEntityPropertyRecord(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  const record = value as Record<string, unknown>
+  return Boolean(record.__domain__ && record.__entity_type__ && record.__entity_id__)
 }
 
 async function loadTopoEntityRows(

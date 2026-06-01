@@ -96,27 +96,15 @@ export function EntityTopoPage({
     setLoading(true)
     setError('')
     try {
-      const [topoResult, entityResult, umodelResult] = await Promise.all([
-        api.query(workspaceId, {
-          query: `.topo | limit ${ENTITY_TOPO_LIMIT}`,
-          limit: ENTITY_TOPO_LIMIT,
-          time_range: {
-            from: toIsoOrUndefined(range.from),
-            to: toIsoOrUndefined(range.to),
-          },
-        }),
-        api.query(workspaceId, {
-          query: `.entity | limit ${ENTITY_PROPERTY_LIMIT}`,
-          limit: ENTITY_PROPERTY_LIMIT,
-          time_range: {
-            from: toIsoOrUndefined(range.from),
-            to: toIsoOrUndefined(range.to),
-          },
-        }).catch(() => null),
-        api.listUModel(workspaceId, 100).catch(() => null),
-      ])
+      const timeRange = {
+        from: toIsoOrUndefined(range.from),
+        to: toIsoOrUndefined(range.to),
+      }
+      const umodelPromise = api.listUModel(workspaceId, 100).catch(() => null)
+      const { topoResult, entityRows } = await loadEntityTopoData(api, workspaceId, timeRange)
+      const umodelResult = await umodelPromise
       const umodelElements = (umodelResult?.rows || []).map(rowToElement).filter((element) => element.kind && element.domain && element.name)
-      const nextData = buildEntityTopoData(topoResult, umodelElements, entityResult?.rows || [])
+      const nextData = buildEntityTopoData(topoResult, umodelElements, entityRows)
       setData(nextData)
       setSelected((current) => resolveSelection(current, nextData))
     } catch (nextError) {
@@ -1072,6 +1060,40 @@ function resolveSelection(selection: TopoSelection | null, data: EntityTopoData)
 
 function createDefaultTimeRange() {
   return { from: '', to: '' }
+}
+
+type QueryTimeRange = {
+  from?: string
+  to?: string
+}
+
+async function loadEntityTopoData(api: UModelApi, workspaceId: string, timeRange: QueryTimeRange) {
+  try {
+    const topoResult = await api.query(workspaceId, {
+      query: entityTopoCypherQuery(ENTITY_TOPO_LIMIT),
+      limit: ENTITY_TOPO_LIMIT,
+      time_range: timeRange,
+    })
+    return { topoResult, entityRows: [] }
+  } catch {
+    const [topoResult, entityResult] = await Promise.all([
+      api.query(workspaceId, {
+        query: `.topo | limit ${ENTITY_TOPO_LIMIT}`,
+        limit: ENTITY_TOPO_LIMIT,
+        time_range: timeRange,
+      }),
+      api.query(workspaceId, {
+        query: `.entity | limit ${ENTITY_PROPERTY_LIMIT}`,
+        limit: ENTITY_PROPERTY_LIMIT,
+        time_range: timeRange,
+      }).catch(() => null),
+    ])
+    return { topoResult, entityRows: entityResult?.rows || [] }
+  }
+}
+
+function entityTopoCypherQuery(limit: number) {
+  return `.topo | graph-call cypher(\`MATCH (src)-[r]->(dest) RETURN properties(src) AS src, properties(r) AS relation, properties(dest) AS dest LIMIT ${limit}\`) | limit ${limit}`
 }
 
 function toDateTimeLocal(date: Date) {
