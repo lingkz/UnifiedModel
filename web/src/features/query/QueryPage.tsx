@@ -7,6 +7,7 @@ import { UModelApi } from '../../api/client'
 import { Badge, Button, EmptyState, IconButton, SegmentedControl } from '../../design/components'
 import { useI18n, type MessageKey, type TFunction } from '../../i18n'
 import { formatError, stringify } from '../../lib/json'
+import { disableMonacoEditContext } from '../../lib/preloadMonaco'
 import { EntityTopoGraphView } from '../entityTopo/EntityTopoGraphView'
 import {
   DEFAULT_ENTITY_TOPO_DISPLAY_SETTINGS,
@@ -25,15 +26,7 @@ import {
 import '../entityTopo/entityTopo.css'
 import './query.css'
 
-const editableGlobal = globalThis as typeof globalThis & { EditContext?: unknown }
-if ('EditContext' in editableGlobal) {
-  try {
-    // Monaco's native EditContext path can swallow input in embedded browsers.
-    Object.defineProperty(editableGlobal, 'EditContext', { value: undefined, configurable: true })
-  } catch {
-    editableGlobal.EditContext = undefined
-  }
-}
+disableMonacoEditContext()
 
 type QueryAction = 'execute' | 'explain'
 type ResultView = 'table' | 'chart'

@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Database, GitBranch, Layers, Network, PanelLeft, Settings2, Sparkles, TerminalSquare, UploadCloud } from 'lucide-react'
 import { UModelApi } from './api/client'
 import type { HealthResponse, WorkspaceMetadata } from './api/types'
 import { Button, Badge, StatusDot, Field, TextInput } from './design/components'
 import { useI18n } from './i18n'
+import { scheduleMonacoPreload } from './lib/preloadMonaco'
 import { useLocalStorageState } from './lib/storage'
 import { WorkspaceLanding } from './features/workspaces/WorkspaceLanding'
 import { WorkspaceShell, type WorkspaceView } from './features/workspace/WorkspaceShell'
@@ -35,6 +36,8 @@ export function App() {
     ],
     [t],
   )
+
+  useEffect(() => scheduleMonacoPreload(), [])
 
   if (!selectedWorkspace) {
     return (
