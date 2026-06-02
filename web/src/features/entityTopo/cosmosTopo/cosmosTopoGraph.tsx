@@ -1135,7 +1135,6 @@ export const CosmosTopoGraph = forwardRef<TopoGraphRef, Omit<TopoGraphProps, 'ty
           onHoverChange: (hover) => {
             if (!mountedRef.current) return
             setHoverPanel(buildHoverPanelInfo(hover, engine as any, tRef.current))
-            requestTick()
           },
         },
       })
