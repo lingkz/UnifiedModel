@@ -1,5 +1,6 @@
 import { enUSCommon } from './common'
 import { enUSEntityTopoExplorer } from './entityTopoExplorer'
+import { enUSImports } from './imports'
 import { enUSLanding } from './landing'
 import { enUSQuery } from './query'
 import { enUSSettings } from './settings'
@@ -8,6 +9,7 @@ import { enUSUModelExplorer } from './umodelExplorer'
 export const enUS = {
   ...enUSCommon,
   ...enUSEntityTopoExplorer,
+  ...enUSImports,
   ...enUSQuery,
   ...enUSUModelExplorer,
   ...enUSSettings,

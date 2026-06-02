@@ -272,7 +272,6 @@ function MonacoBlock({
   onContentHeightChange?: (height: number) => void
   onSubmit?: () => void
 }) {
-  const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null)
   const autoHeightRef = useRef({ min: minAutoHeight, max: maxAutoHeight, onChange: onContentHeightChange, onSubmit })
   autoHeightRef.current = { min: minAutoHeight, max: maxAutoHeight, onChange: onContentHeightChange, onSubmit }
 
@@ -285,26 +284,12 @@ function MonacoBlock({
   }
 
   return (
-    <div
-      className="query-monaco"
-      onMouseDownCapture={() => {
-        if (!readOnly) editorRef.current?.focus()
-      }}
-      onPasteCapture={(event) => {
-        if (readOnly) return
-        const text = event.clipboardData.getData('text/plain')
-        if (!text) return
-        editorRef.current?.trigger('keyboard', 'type', { text })
-        event.preventDefault()
-      }}
-      style={{ height }}
-    >
+    <div className="query-monaco" style={{ height }}>
       <Editor
         value={value}
         language={language}
         theme="vs"
         onMount={(editor, monaco) => {
-          editorRef.current = editor
           updateAutoHeight(editor)
           editor.onDidContentSizeChange(() => updateAutoHeight(editor))
           if (!readOnly) {
@@ -319,6 +304,7 @@ function MonacoBlock({
           if (!readOnly) onChange?.(nextValue || '')
         }}
         options={{
+          accessibilitySupport: 'off',
           automaticLayout: true,
           domReadOnly: readOnly,
           fontFamily: 'var(--om-mono)',
