@@ -148,36 +148,60 @@
   min-height: 0;
   overflow: auto;
   padding: 6px 7px;
+}
+
+.api-debug-list,
+.api-debug-request,
+.api-debug-response,
+.api-debug-doc-table-wrap {
   scrollbar-color: transparent transparent;
   scrollbar-width: thin;
 }
 
-.api-debug-list:hover {
+.api-debug-list:hover,
+.api-debug-request:hover,
+.api-debug-response:hover,
+.api-debug-doc-table-wrap:hover {
   scrollbar-color: rgba(113, 113, 122, 0.34) transparent;
 }
 
-.api-debug-list::-webkit-scrollbar {
+.api-debug-list::-webkit-scrollbar,
+.api-debug-request::-webkit-scrollbar,
+.api-debug-response::-webkit-scrollbar,
+.api-debug-doc-table-wrap::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
-.api-debug-list::-webkit-scrollbar-track {
+.api-debug-list::-webkit-scrollbar-track,
+.api-debug-request::-webkit-scrollbar-track,
+.api-debug-response::-webkit-scrollbar-track,
+.api-debug-doc-table-wrap::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.api-debug-list::-webkit-scrollbar-thumb {
+.api-debug-list::-webkit-scrollbar-thumb,
+.api-debug-request::-webkit-scrollbar-thumb,
+.api-debug-response::-webkit-scrollbar-thumb,
+.api-debug-doc-table-wrap::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 999px;
   background: transparent;
   background-clip: padding-box;
 }
 
-.api-debug-list:hover::-webkit-scrollbar-thumb {
+.api-debug-list:hover::-webkit-scrollbar-thumb,
+.api-debug-request:hover::-webkit-scrollbar-thumb,
+.api-debug-response:hover::-webkit-scrollbar-thumb,
+.api-debug-doc-table-wrap:hover::-webkit-scrollbar-thumb {
   background: rgba(113, 113, 122, 0.34);
   background-clip: padding-box;
 }
 
-.api-debug-list::-webkit-scrollbar-thumb:hover {
+.api-debug-list::-webkit-scrollbar-thumb:hover,
+.api-debug-request::-webkit-scrollbar-thumb:hover,
+.api-debug-response::-webkit-scrollbar-thumb:hover,
+.api-debug-doc-table-wrap::-webkit-scrollbar-thumb:hover {
   background-color: rgba(82, 82, 91, 0.5);
   background-clip: padding-box;
 }
@@ -250,17 +274,11 @@
 
 .api-debug-request,
 .api-debug-response {
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
   gap: 11px;
   padding: 11px;
   overflow: auto;
-}
-
-.api-debug-response {
-  display: flex;
-  flex-direction: column;
-  align-content: stretch;
 }
 
 .api-debug-card-header {
@@ -387,6 +405,35 @@
 .api-debug-monaco:focus-within {
   border-color: var(--om-primary);
   box-shadow: 0 0 0 3px var(--om-primary-ring);
+}
+
+.api-debug-monaco .monaco-scrollable-element > .scrollbar > .slider {
+  border-radius: 999px !important;
+  background: rgba(113, 113, 122, 0.34) !important;
+}
+
+.api-debug-body-section {
+  min-height: 360px;
+  flex: 1 1 360px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.api-debug-request-json {
+  min-width: 0;
+  min-height: 260px;
+  flex: 1 1 auto;
+}
+
+.api-debug-request-json .api-debug-monaco {
+  height: 100%;
+}
+
+.api-debug-body-section .api-debug-doc-table-wrap {
+  min-height: 0;
+  max-height: 40%;
+  flex: 0 1 auto;
 }
 
 .api-debug-response-json {

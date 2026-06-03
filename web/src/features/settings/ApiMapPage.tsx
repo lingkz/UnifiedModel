@@ -710,9 +710,11 @@ export function ApiMapPage({ api, workspaceId }: { api: UModelApi; workspaceId: 
           />
 
           {hasBody && (
-            <section className="api-debug-section">
+            <section className="api-debug-section api-debug-body-section">
               <SectionTitle icon={<Braces size={14} />} title={t('apiDebugger.requestBody')} />
-              <MonacoBlock value={bodyText} language="json" height={250} onChange={setBodyText} />
+              <div className="api-debug-request-json">
+                <MonacoBlock value={bodyText} language="json" height="100%" onChange={setBodyText} />
+              </div>
               <FieldDocTable fields={selected.bodyFields || []} t={t} requiredLabel={t('apiDebugger.required')} />
             </section>
           )}
@@ -873,8 +875,14 @@ function MonacoBlock({
           readOnly,
           renderLineHighlight: readOnly ? 'none' : 'line',
           scrollBeyondLastLine: false,
+          scrollBeyondLastColumn: 6,
+          scrollbar: {
+            horizontal: 'auto',
+            vertical: 'auto',
+            useShadows: false,
+          },
           tabSize: 2,
-          wordWrap: 'on',
+          wordWrap: 'off',
         }}
       />
     </div>
