@@ -1,3 +1,4 @@
+import { enUSApiDebugger } from './apiDebugger'
 import { enUSCommon } from './common'
 import { enUSEntityTopoExplorer } from './entityTopoExplorer'
 import { enUSImports } from './imports'
@@ -7,6 +8,7 @@ import { enUSSettings } from './settings'
 import { enUSUModelExplorer } from './umodelExplorer'
 
 export const enUS = {
+  ...enUSApiDebugger,
   ...enUSCommon,
   ...enUSEntityTopoExplorer,
   ...enUSImports,

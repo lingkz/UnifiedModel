@@ -10,7 +10,7 @@ export const enUSCommon = {
   'language.label': 'Language',
   'language.english': 'English',
   'language.simplifiedChinese': '简体中文',
-  'nav.apiMap': 'API Map',
+  'nav.apiMap': 'API Debugger',
   'nav.collapseSidebar': 'Collapse sidebar',
   'nav.entityTopo': 'EntityTopo Explorer',
   'nav.expandSidebar': 'Expand sidebar',

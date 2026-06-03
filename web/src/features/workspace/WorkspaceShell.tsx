@@ -90,14 +90,14 @@ export function WorkspaceShell({
           />
         )
       case 'docs':
-        return <ApiMapPage />
+        return <ApiMapPage api={api} workspaceId={workspaceId} />
       default:
         return null
     }
   }, [api, onBack, onWorkspaceChange, refreshToken, view, workspace, workspaceId])
 
   const explorerHost = view === 'explorer' || view === 'entityTopo'
-  const topbarHidden = explorerHost || view === 'query' || view === 'imports' || view === 'settings'
+  const topbarHidden = explorerHost || view === 'query' || view === 'imports' || view === 'settings' || view === 'docs'
 
   return (
     <div className={`workspace-shell app-shell ${sidebarCollapsed ? 'collapsed' : ''} ${explorerHost ? 'explorer-host' : ''}`}>
