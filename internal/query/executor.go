@@ -281,6 +281,9 @@ func methodInfoGetLogs() entityCallMethodInfo {
 				DisplayName: "Query expression for the log set",
 				Description: "Basic SPL where syntax, for example service_id = 'service_a' and level in ['ERROR', 'WARN'].",
 			},
+			{Key: "storage_domain", Type: "varchar", DisplayName: "Storage Domain", Description: "Optional storage domain used to select a specific StorageLink target."},
+			{Key: "storage_name", Type: "varchar", DisplayName: "Storage Name", Description: "Optional storage name used to select a specific StorageLink target."},
+			{Key: "storage_kind", Type: "varchar", DisplayName: "Storage Kind", Description: "Optional storage kind used to select a specific StorageLink target."},
 		},
 		Returns: []assistantReturnInfo{
 			{Key: "query", Type: "varchar", DisplayName: "Log query plan"},
@@ -310,6 +313,10 @@ func methodInfoGetMetrics() entityCallMethodInfo {
 			},
 			{Key: "query_type", Type: "varchar", DisplayName: "Prometheus query type", Description: "range or instant. Defaults to the MetricSet/storage preference."},
 			{Key: "step", Type: "varchar", DisplayName: "Range query step", Description: "Range query step, for example 1m."},
+			{Key: "aggregate", Type: "boolean", DisplayName: "Aggregate time series", Description: "Whether to aggregate the time series.", Default: true},
+			{Key: "storage_domain", Type: "varchar", DisplayName: "Storage Domain", Description: "Optional storage domain used to select a specific StorageLink target."},
+			{Key: "storage_name", Type: "varchar", DisplayName: "Storage Name", Description: "Optional storage name used to select a specific StorageLink target."},
+			{Key: "storage_kind", Type: "varchar", DisplayName: "Storage Kind", Description: "Optional storage kind used to select a specific StorageLink target."},
 		},
 		Returns: []assistantReturnInfo{
 			{Key: "query", Type: "varchar", DisplayName: "Metric query plan"},
@@ -510,7 +517,12 @@ func logQueryPlan(plan model.QueryPlan, dataLink model.UModelElement, logSet mod
 	methodQuery := stringFilter(plan.EntityCall.Parameters["query"])
 
 	queryPlan := map[string]any{
-		"operation": "get_logs",
+		"mode":         "plan",
+		"version":      "v1",
+		"operation":    "get_logs",
+		"description":  describeLogPlan(logSet, binding.Storage, methodQuery),
+		"next_action":  nextActionForwardToExecutor,
+		"source_query": plan.Query,
 		"data_source": map[string]any{
 			"data_set": map[string]any{
 				"domain": logSet.Domain,
@@ -534,7 +546,11 @@ func logQueryPlan(plan model.QueryPlan, dataLink model.UModelElement, logSet mod
 				"spec":   binding.Link.Spec,
 			},
 		},
-		"query": buildLogStorageQuery(logSet, binding.Storage, dataLinkMapping, storageLinkMapping, entityIDs, entityQuery, dataFilter, methodQuery, plan.EntityData, plan.Limit),
+		"params_echo": echoParams(plan.EntityCall.Parameters),
+		"query":       buildLogStorageQuery(logSet, binding.Storage, dataLinkMapping, storageLinkMapping, entityIDs, entityQuery, dataFilter, methodQuery, plan.EntityData, plan.Limit),
+	}
+	if plan.TimeRange.From != nil || plan.TimeRange.To != nil {
+		queryPlan["time_range"] = plan.TimeRange
 	}
 	return queryPlan
 }
@@ -549,8 +565,14 @@ func metricQueryPlan(plan model.QueryPlan, dataLink model.UModelElement, metricS
 	queryType := stringFilter(plan.EntityCall.Parameters["query_type"])
 	step := stringFilter(plan.EntityCall.Parameters["step"])
 
+	metricName := stringFilter(plan.EntityCall.Parameters["metric"])
 	queryPlan := map[string]any{
-		"operation": "get_metrics",
+		"mode":         "plan",
+		"version":      "v1",
+		"operation":    "get_metrics",
+		"description":  describeMetricPlan(metricSet, binding.Storage, metricName, methodQuery, queryType, step),
+		"next_action":  nextActionForwardToExecutor,
+		"source_query": plan.Query,
 		"data_source": map[string]any{
 			"data_set": map[string]any{
 				"domain": metricSet.Domain,
@@ -574,12 +596,83 @@ func metricQueryPlan(plan model.QueryPlan, dataLink model.UModelElement, metricS
 				"spec":   binding.Link.Spec,
 			},
 		},
-		"query": buildMetricStorageQuery(metricSet, binding.Storage, dataLinkMapping, storageLinkMapping, metrics, entityIDs, entityQuery, dataFilter, methodQuery, plan.EntityData, queryType, step, plan.Limit),
+		"params_echo": echoParams(plan.EntityCall.Parameters),
+		"query":       buildMetricStorageQuery(metricSet, binding.Storage, dataLinkMapping, storageLinkMapping, metrics, entityIDs, entityQuery, dataFilter, methodQuery, plan.EntityData, queryType, step, plan.Limit),
 	}
 	if plan.TimeRange.From != nil || plan.TimeRange.To != nil {
 		queryPlan["time_range"] = plan.TimeRange
 	}
 	return queryPlan
+}
+
+// nextActionForwardToExecutor is the canonical "next_action" hint embedded in
+// every plan-mode response. An AI agent that receives this plan should not
+// try to execute the inner storage query itself; the canonical path is to
+// forward the plan to a UModel data executor (e.g. umodel-assistant) that
+// turns it into rows.
+const nextActionForwardToExecutor = "forward_to_executor"
+
+// describeMetricPlan returns a one-line human-readable summary of what the
+// metric plan does, so an AI agent can render or relay it to a user without
+// having to reverse-engineer the inner storage query.
+func describeMetricPlan(metricSet, storage model.UModelElement, metricName, filter, queryType, step string) string {
+	metricLabel := metricName
+	if metricLabel == "" {
+		metricLabel = "all metrics"
+	} else {
+		metricLabel = fmt.Sprintf("metric %q", metricName)
+	}
+	parts := []string{fmt.Sprintf("Retrieve %s from MetricSet %s/%s", metricLabel, metricSet.Domain, metricSet.Name)}
+	if filter != "" {
+		parts = append(parts, fmt.Sprintf("filtered by [%s]", filter))
+	}
+	if queryType != "" {
+		parts = append(parts, fmt.Sprintf("as %s query", queryType))
+	}
+	if step != "" {
+		parts = append(parts, fmt.Sprintf("with step %s", step))
+	}
+	parts = append(parts, fmt.Sprintf("(storage: %s/%s).", storage.Kind, storage.Name))
+	parts = append(parts, "Forward this plan to a UModel data executor (e.g. umodel-assistant) to fetch real time series.")
+	return strings.Join(parts, " ")
+}
+
+// describeLogPlan returns a one-line human-readable summary of what the log
+// plan does, parallel to describeMetricPlan.
+func describeLogPlan(logSet, storage model.UModelElement, filter string) string {
+	parts := []string{fmt.Sprintf("Retrieve logs from LogSet %s/%s", logSet.Domain, logSet.Name)}
+	if filter != "" {
+		parts = append(parts, fmt.Sprintf("filtered by [%s]", filter))
+	}
+	parts = append(parts, fmt.Sprintf("(storage: %s/%s).", storage.Kind, storage.Name))
+	parts = append(parts, "Forward this plan to a UModel data executor (e.g. umodel-assistant) to fetch real log rows.")
+	return strings.Join(parts, " ")
+}
+
+// echoParams returns the entity-call parameters that the caller actually
+// supplied, with nil and empty-string values stripped. Plan v1 includes this
+// echo so an executor (e.g. umodel-assistant) can recover the full call
+// context — including parameters declared in the method signature but not
+// consumed by the open-source planner (aggregate, storage_*).
+func echoParams(params map[string]any) map[string]any {
+	if len(params) == 0 {
+		return map[string]any{}
+	}
+	out := make(map[string]any, len(params))
+	for k, v := range params {
+		switch val := v.(type) {
+		case nil:
+			continue
+		case string:
+			if val == "" {
+				continue
+			}
+			out[k] = val
+		default:
+			out[k] = v
+		}
+	}
+	return out
 }
 
 func selectedMetricSpecs(metricSet model.UModelElement, metricName string) ([]map[string]any, error) {
